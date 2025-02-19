@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #000000;
+  --card: #111111;
+  --card-hover: #191919;
+  --primary: #ffffff;
+  --secondary: #888888;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --border: #222222;
+  --success: #22c55e;
+  --error: #ef4444;
+}
+
+body {
+  background: var(--background);
+  color: var(--primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+/* Glass Effect */
+.glass {
+  background: rgba(17, 17, 17, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom Ring Focus */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-black;
+}
+
+/* Gradient Text */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400;
+}
+
+/* Hover Card Effect */
+.hover-card {
+  @apply transition-all duration-200;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.hover-card:hover {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Input Styles */
+.modern-input {
+  @apply bg-transparent border-2 border-[var(--border)] rounded-lg px-4 py-4 text-[var(--primary)] placeholder-[var(--secondary)] 
+  focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all duration-200;
+}
+
+.modern-input:focus::placeholder {
+  @apply text-[var(--accent)];
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg 
+  transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-black
+  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--accent)];
+}
+
+.btn-secondary {
+  @apply bg-[var(--card)] hover:bg-[var(--card-hover)] text-[var(--primary)] px-4 py-2 rounded-lg 
+  transition-all duration-200 border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-black;
+}
+
+/* Vote Button Styles */
+.vote-btn {
+  @apply p-2 rounded-lg transition-all duration-200 hover:bg-[var(--card-hover)];
+}
+
+.vote-btn.active {
+  @apply bg-[var(--card-hover)] text-[var(--accent)];
+}
+
+/* Card Styles */
+.card {
+  @apply bg-[var(--card)] rounded-xl p-4 hover-card;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
