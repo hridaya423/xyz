@@ -1,12 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 interface HUDProps {
   ammo: number;
   reloading: boolean;
   health: number;
+  onUnpause: () => void;
 }
 
-export default function HUD({ ammo, reloading, health }: HUDProps) {
+export default function HUD({ ammo, reloading, health, onUnpause }: HUDProps) {
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const handlePointerLockChange = () => {
+      if (document.pointerLockElement === null) {
+        setIsPaused(true);
+      }
+    };
+
+    document.addEventListener("pointerlockchange", handlePointerLockChange);
+
+    return () => {
+      document.removeEventListener("pointerlockchange", handlePointerLockChange);
+    };
+  }, []);
+
+  const handleResume = () => {
+    document.body.requestPointerLock();
+    setIsPaused(false);
+    onUnpause();
+  };
+
   return (
     <>
       {/* Crosshair */}
@@ -22,7 +45,7 @@ export default function HUD({ ammo, reloading, health }: HUDProps) {
       </div>
 
       {/* HUD Info */}
-      <div className="absolute bottom-4 left-4 text-white font-mono">
+      <div className="absolute bottom-4 left-4 text-white font-mono p-4 border-2 border-white rounded bg-black bg-opacity-50">
         <div className="mb-2">
           <strong>Health:</strong> {health}
         </div>
@@ -31,6 +54,24 @@ export default function HUD({ ammo, reloading, health }: HUDProps) {
           {reloading && <span className="text-yellow-300">(Reloading...)</span>}
         </div>
       </div>
+
+      {/* Pause Overlay */}
+      {isPaused && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center text-white text-2xl"
+          onClick={handleResume}
+        >
+          <div className="text-center">
+            <p>Game Paused</p>
+            <button
+              className="mt-4 px-4 py-2 bg-white text-black rounded"
+              onClick={handleResume}
+            >
+              Resume
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
