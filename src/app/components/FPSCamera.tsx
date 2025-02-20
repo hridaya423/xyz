@@ -65,6 +65,7 @@ export default function FPSCamera({
     jump: false,
   });
 
+  // Visual Studio Code hates this line.
   function reload() {
     if (reloading) return;
     setReloading(true);
@@ -141,19 +142,25 @@ export default function FPSCamera({
     function handleKeyDown(e: KeyboardEvent) {
       if (isPaused && e.code !== "Space") return;
 
+      // Switch the key codes
       switch (e.code) {
+        // W
         case "KeyW":
           keyState.current.forward = true;
           break;
+        // S
         case "KeyS":
           keyState.current.backward = true;
           break;
+        // A
         case "KeyA":
           keyState.current.left = true;
           break;
+        // D
         case "KeyD":
           keyState.current.right = true;
           break;
+        // Space
         case "Space":
           if (isPaused) {
             onUnpause();
@@ -162,6 +169,7 @@ export default function FPSCamera({
             controls.current.isGrounded = false;
           }
           break;
+        // R
         case "KeyR":
           if (!reloading && ammo < maxAmmo) {
             reload();
@@ -174,15 +182,19 @@ export default function FPSCamera({
       if (isPaused) return;
 
       switch (e.code) {
+        // W
         case "KeyW":
           keyState.current.forward = false;
           break;
+        // S
         case "KeyS":
           keyState.current.backward = false;
           break;
+        // A
         case "KeyA":
           keyState.current.left = false;
           break;
+        // D
         case "KeyD":
           keyState.current.right = false;
           break;
@@ -234,24 +246,25 @@ export default function FPSCamera({
       e.preventDefault();
     }
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", handleKeyUp);
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("mousemove", updateRotation);
-    document.addEventListener("click", lockControls);
-    document.addEventListener("pointerlockchange", handleLockChange);
-    document.addEventListener("contextmenu", handleContextMenu);
+    // Add listeners (Cant wait for firefox to crash on this code)
+    document.addEventListener("keydown", handleKeyDown); // Key down
+    document.addEventListener("keyup", handleKeyUp); // Key up
+    document.addEventListener("mousedown", handleMouseDown); // Mouse down
+    document.addEventListener("mouseup", handleMouseUp); // Mouse up
+    document.addEventListener("mousemove", updateRotation); // Mouse move
+    document.addEventListener("click", lockControls); // Click
+    document.addEventListener("pointerlockchange", handleLockChange); // Pointer lock change
+    document.addEventListener("contextmenu", handleContextMenu); // Content menu
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp);
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("mousemove", updateRotation);
-      document.removeEventListener("click", lockControls);
-      document.removeEventListener("pointerlockchange", handleLockChange);
-      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown); // Key down
+      document.removeEventListener("keyup", handleKeyUp); // Key up
+      document.removeEventListener("mousedown", handleMouseDown); // Mouse down
+      document.removeEventListener("mouseup", handleMouseUp); // Mouse up
+      document.removeEventListener("mousemove", updateRotation); // Mouse move
+      document.removeEventListener("click", lockControls); // Click
+      document.removeEventListener("pointerlockchange", handleLockChange); // Pointer lock change
+      document.removeEventListener("contextmenu", handleContextMenu); // Content menu
     };
   }, [isPaused, onUnpause, ammo, reloading, reload]);
 
@@ -259,7 +272,7 @@ export default function FPSCamera({
 
   useFrame(() => {
     if (isShootingRef.current) {
-      shoot();
+      shoot(); // Shoot
     }
 
     controls.current.recoil *= 0.95;
@@ -275,6 +288,7 @@ export default function FPSCamera({
 
     let isOnPlatform = false;
     const playerY = newPosition.y - 1.7;
+    // Le boxes
     const platformBoxes = [
       { min: [-7, 1.5, -12], max: [-3, 2, -8] },
       { min: [3, 2, -17], max: [7, 2.5, -13] },
