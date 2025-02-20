@@ -16,6 +16,7 @@ interface WorldProps {
   ) => void;
   isPaused: boolean;
   onUnpause: () => void;
+  onGrenadeUpdate: (grenades: number) => void;
 }
 
 export default function World({
@@ -23,6 +24,7 @@ export default function World({
   onAmmoUpdate,
   onHealthUpdate,
   onPlayersUpdate,
+  onGrenadeUpdate,
   isPaused,
   onUnpause,
 }: WorldProps) {
@@ -246,6 +248,7 @@ export default function World({
         ws={ws}
         onPositionUpdate={handlePositionUpdate}
         onAmmoChange={onAmmoUpdate}
+        onGrenadeChange={onGrenadeUpdate}
         isPaused={isPaused}
         onUnpause={onUnpause}
       />

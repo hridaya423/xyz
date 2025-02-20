@@ -14,6 +14,7 @@ export default function Game() {
   const [ammo, setAmmo] = useState<number>(30);
   const [reloading, setReloading] = useState<boolean>(false);
   const [health, setHealth] = useState<number>(100);
+  const [grenades, setGrenades] = useState<number>(5);
   const [playersCount, setPlayersCount] = useState<number>(0);
   const [isPaused, setIsPaused] = useState(true);
 
@@ -31,6 +32,11 @@ export default function Game() {
   ) => {
     setPlayersCount(remotePlayersCount + (localPlayerExists ? 1 : 0));
   };
+  const handleGrenadeUpdate = (
+    newGrenades: number
+  ) => {
+    setGrenades(newGrenades);
+  };
 
   const handleUnpause = () => {
     setIsPaused(false);
@@ -46,6 +52,7 @@ export default function Game() {
           ws={ws}
           onAmmoUpdate={handleAmmoUpdate}
           onHealthUpdate={handleHealthUpdate}
+          onGrenadeUpdate={handleGrenadeUpdate}
           onPlayersUpdate={handlePlayersUpdate}
           isPaused={isPaused}
           onUnpause={handleUnpause}

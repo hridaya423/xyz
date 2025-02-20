@@ -9,6 +9,7 @@ interface FPSCameraProps {
   ws?: WebSocket | null;
   onPositionUpdate?: (position: THREE.Vector3, rotation: THREE.Euler) => void;
   onAmmoChange?: (ammo: number, reloading: boolean) => void;
+  onGrenadeChange?: (grenades: number) => void;
   isPaused: boolean;
   onUnpause: () => void;
 }
@@ -18,6 +19,7 @@ export default function FPSCamera({
   ws,
   onPositionUpdate,
   onAmmoChange,
+  onGrenadeChange,
   isPaused,
   onUnpause,
 }: FPSCameraProps) {
@@ -38,8 +40,10 @@ export default function FPSCamera({
   const playerGunRef = useRef<THREE.Group>(null);
 
   const maxAmmo = 30;
+  const maxGrenades = 5;
   const reloadTime = 2000;
   const [ammo, setAmmo] = useState<number>(maxAmmo);
+  const [grenades, setGrenades] = useState<number>(maxGrenades);
   const [reloading, setReloading] = useState<boolean>(false);
   const [muzzleFlash, setMuzzleFlash] = useState(false);
 
@@ -48,6 +52,12 @@ export default function FPSCamera({
       onAmmoChange(ammo, reloading);
     }
   }, [ammo, reloading, onAmmoChange]);
+
+  useEffect(() => {
+    if (onGrenadeChange) {
+      onGrenadeChange(grenades);
+    }
+  }, [grenades, onGrenadeChange])
 
   const lastShotRef = useRef(0);
   const [bullets, setBullets] = useState<
@@ -73,6 +83,14 @@ export default function FPSCamera({
       setAmmo(maxAmmo);
       setReloading(false);
     }, reloadTime);
+  }
+
+  function shootGrenade() {
+    if (grenades > 0) {
+      console.log("shooting grenades");
+
+      setGrenades((prev) => prev - 1);
+    }
   }
 
   function shoot() {
@@ -174,6 +192,10 @@ export default function FPSCamera({
           if (!reloading && ammo < maxAmmo) {
             reload();
           }
+          break;
+        // G
+        case "KeyG":
+          shootGrenade();
           break;
       }
     }
