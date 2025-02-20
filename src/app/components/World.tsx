@@ -1,31 +1,45 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import * as THREE from 'three';
-import FPSCamera from './FPSCamera';
-import PlayerModel from './PlayerModel';
-import Platform from './Platform';
-import Target from './Target';
-import type { Player } from '../../types/game';
+import React, { useState, useEffect, useCallback } from "react";
+import * as THREE from "three";
+import FPSCamera from "./FPSCamera";
+import PlayerModel from "./PlayerModel";
+import Platform from "./Platform";
+import Target from "./Target";
+import type { Player } from "../../types/game";
 
 interface WorldProps {
   ws: WebSocket | null;
   onAmmoUpdate: (ammo: number, reloading: boolean) => void;
   onHealthUpdate: (health: number) => void;
-  onPlayersUpdate?: (remotePlayersCount: number, localPlayerExists: boolean) => void;
+  onPlayersUpdate?: (
+    remotePlayersCount: number,
+    localPlayerExists: boolean
+  ) => void;
+  isPaused: boolean;
+  onUnpause: () => void;
 }
 
-export default function World({ ws, onAmmoUpdate, onHealthUpdate, onPlayersUpdate }: WorldProps) {
+export default function World({
+  ws,
+  onAmmoUpdate,
+  onHealthUpdate,
+  onPlayersUpdate,
+  isPaused,
+  onUnpause,
+}: WorldProps) {
   const [players, setPlayers] = useState<
     Map<string, { position: THREE.Vector3; rotation: THREE.Euler }>
   >(new Map());
   const [playerId, setPlayerId] = useState<string | null>(null);
-  const [remoteShooting, setRemoteShooting] = useState<Map<string, number>>(new Map());
+  const [remoteShooting, setRemoteShooting] = useState<Map<string, number>>(
+    new Map()
+  );
 
   const handlePositionUpdate = useCallback(
     (position: THREE.Vector3, rotation: THREE.Euler) => {
       if (ws && playerId) {
         ws.send(
           JSON.stringify({
-            type: 'player-update',
+            type: "player-update",
             payload: {
               id: playerId,
               position: { x: position.x, y: position.y, z: position.z },
@@ -148,9 +162,9 @@ export default function World({ ws, onAmmoUpdate, onHealthUpdate, onPlayersUpdat
       }
     };
 
-    ws.addEventListener('message', handleMessage);
+    ws.addEventListener("message", handleMessage);
     return () => {
-      ws.removeEventListener('message', handleMessage);
+      ws.removeEventListener("message", handleMessage);
     };
   }, [ws, playerId, onHealthUpdate]);
 
@@ -221,6 +235,8 @@ export default function World({ ws, onAmmoUpdate, onHealthUpdate, onPlayersUpdat
         ws={ws}
         onPositionUpdate={handlePositionUpdate}
         onAmmoChange={onAmmoUpdate}
+        isPaused={isPaused}
+        onUnpause={onUnpause}
       />
     </>
   );

@@ -253,7 +253,7 @@ export default function FPSCamera({
       document.removeEventListener("pointerlockchange", handleLockChange);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [isPaused, onUnpause, ammo, reloading]);
+  }, [isPaused, onUnpause, ammo, reloading, reload]);
 
   const [isAiming, setIsAiming] = useState(false);
 

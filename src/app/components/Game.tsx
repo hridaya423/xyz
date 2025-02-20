@@ -14,6 +14,8 @@ export default function Game() {
   const [reloading, setReloading] = useState<boolean>(false);
   const [health, setHealth] = useState<number>(100);
   const [playersCount, setPlayersCount] = useState<number>(0);
+  const [isPaused, setIsPaused] = useState(true);
+
   const handleAmmoUpdate = (newAmmo: number, isReloading: boolean) => {
     setAmmo(newAmmo);
     setReloading(isReloading);
@@ -28,6 +30,10 @@ export default function Game() {
     setPlayersCount(remotePlayersCount + (localPlayerExists ? 1 : 0));
   };
 
+  const handleUnpause = () => {
+    setIsPaused(false);
+  };
+
   return (
     <div className="w-full h-screen relative">
       <Canvas shadows camera={{ fov: 75, near: 0.1, far: 1000 }}>
@@ -36,9 +42,16 @@ export default function Game() {
           onAmmoUpdate={handleAmmoUpdate}
           onHealthUpdate={handleHealthUpdate}
           onPlayersUpdate={handlePlayersUpdate}
+          isPaused={isPaused}
+          onUnpause={handleUnpause}
         />
       </Canvas>
-      <HUD ammo={ammo} reloading={reloading} health={health} />
+      <HUD
+        ammo={ammo}
+        reloading={reloading}
+        health={health}
+        onUnpause={handleUnpause}
+      />
       <div className="absolute top-4 left-4 bg-black/50 p-4 rounded text-white">
         <h2 className="text-xl font-bold">Connection Status</h2>
         <p>Connected: {connected ? "Yes" : "No"}</p>
