@@ -34,6 +34,7 @@ export default function World({
     new Map()
   );
 
+  // Handle smth
   const handlePositionUpdate = useCallback(
     (position: THREE.Vector3, rotation: THREE.Euler) => {
       if (ws && playerId) {
@@ -61,9 +62,11 @@ export default function World({
   useEffect(() => {
     if (!ws) return;
 
+    // Handle messages
     const handleMessage = (event: MessageEvent) => {
       const message = JSON.parse(event.data);
       switch (message.type) {
+        // Game state
         case "game-state": {
           const newPlayers = new Map();
           message.payload.players.forEach((player: Player) => {
@@ -90,6 +93,7 @@ export default function World({
           }
           break;
         }
+        // Player join
         case "player-join": {
           if (message.payload.id !== playerId) {
             setPlayers((prev) => {
@@ -111,6 +115,7 @@ export default function World({
           }
           break;
         }
+        // Player leave
         case "player-leave": {
           setPlayers((prev) => {
             const next = new Map(prev);
@@ -119,6 +124,7 @@ export default function World({
           });
           break;
         }
+        // Player update
         case "player-update": {
           if (message.payload.id !== playerId) {
             setPlayers((prev) => {
@@ -142,12 +148,14 @@ export default function World({
           }
           break;
         }
+        // Player hit
         case "player-hit": {
           if (message.payload.targetId === playerId) {
             onHealthUpdate(message.payload.health);
           }
           break;
         }
+        // Player shoot
         case "player-shoot": {
           const shooterId = message.payload.playerId;
           if (shooterId && shooterId !== playerId) {
@@ -162,12 +170,14 @@ export default function World({
       }
     };
 
+    // Send ws data (i think - ploszukiwacz)
     ws.addEventListener("message", handleMessage);
     return () => {
       ws.removeEventListener("message", handleMessage);
     };
   }, [ws, playerId, onHealthUpdate]);
 
+  // Reutrn the world (i think - ploszukiwacz)
   return (
     <>
       <ambientLight intensity={1.0} />
@@ -230,6 +240,7 @@ export default function World({
         />
       ))}
 
+      {/* The First Person Shooter Camera */}
       <FPSCamera
         playerId={playerId}
         ws={ws}
