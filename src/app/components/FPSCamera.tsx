@@ -9,6 +9,8 @@ interface FPSCameraProps {
   ws?: WebSocket | null;
   onPositionUpdate?: (position: THREE.Vector3, rotation: THREE.Euler) => void;
   onAmmoChange?: (ammo: number, reloading: boolean) => void;
+  isPaused: boolean;
+  onUnpause: () => void;
 }
 
 export default function FPSCamera({
@@ -16,6 +18,8 @@ export default function FPSCamera({
   ws,
   onPositionUpdate,
   onAmmoChange,
+  isPaused,
+  onUnpause,
 }: FPSCameraProps) {
   const { camera, raycaster, scene } = useThree();
   const controls = useRef({
@@ -23,7 +27,7 @@ export default function FPSCamera({
     position: { x: 0, y: 1.7, z: 0 },
     velocity: { x: 0, y: 0, z: 0 },
     recoil: 0,
-    moveSpeed: 0.3,
+    moveSpeed: 0.1,
     lookSpeed: 0.003,
     jumpForce: 0.3,
     isGrounded: true,
@@ -134,9 +138,9 @@ export default function FPSCamera({
   }
 
   useEffect(() => {
-    //let isLocked = false;
-
     function handleKeyDown(e: KeyboardEvent) {
+      if (isPaused && e.code !== "Space") return;
+
       switch (e.code) {
         case "KeyW":
           keyState.current.forward = true;
@@ -151,7 +155,9 @@ export default function FPSCamera({
           keyState.current.right = true;
           break;
         case "Space":
-          if (controls.current.isGrounded) {
+          if (isPaused) {
+            onUnpause();
+          } else if (controls.current.isGrounded) {
             controls.current.velocity.y = controls.current.jumpForce;
             controls.current.isGrounded = false;
           }
@@ -163,7 +169,10 @@ export default function FPSCamera({
           break;
       }
     }
+
     function handleKeyUp(e: KeyboardEvent) {
+      if (isPaused) return;
+
       switch (e.code) {
         case "KeyW":
           keyState.current.forward = false;
@@ -179,22 +188,30 @@ export default function FPSCamera({
           break;
       }
     }
+
     function handleMouseDown(e: MouseEvent) {
+      if (isPaused) return;
+
       if (e.button === 0) {
         isShootingRef.current = true;
       } else if (e.button === 2) {
         setIsAiming(true);
       }
     }
+
     function handleMouseUp(e: MouseEvent) {
+      if (isPaused) return;
+
       if (e.button === 0) {
         isShootingRef.current = false;
       } else if (e.button === 2) {
         setIsAiming(false);
       }
     }
+
     function updateRotation(e: MouseEvent) {
-      // Always update rotation when mouse moves, regardless of lock state
+      if (isPaused) return;
+
       controls.current.rotation.x = Math.max(
         -Math.PI / 2,
         Math.min(
@@ -204,12 +221,15 @@ export default function FPSCamera({
       );
       controls.current.rotation.y -= e.movementX * controls.current.lookSpeed;
     }
+
     function lockControls() {
       document.body.requestPointerLock();
     }
+
     function handleLockChange() {
       //isLocked = document.pointerLockElement === document.body;
     }
+
     function handleContextMenu(e: Event) {
       e.preventDefault();
     }
@@ -233,7 +253,7 @@ export default function FPSCamera({
       document.removeEventListener("pointerlockchange", handleLockChange);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [camera, ammo, reloading]);
+  }, [isPaused, onUnpause, ammo, reloading]);
 
   const [isAiming, setIsAiming] = useState(false);
 
