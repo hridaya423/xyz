@@ -1,16 +1,15 @@
-'use client'
-import React, {useState} from 'react';
-import { Canvas } from '@react-three/fiber';
-import World from './World';
-import HUD from './HUD';
-import useGameSocket from '../../hooks/useGameSocket';
-
+"use client";
+import React, { useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import World from "./World";
+import HUD from "./HUD";
+import useGameSocket from "../../hooks/useGameSocket";
 
 export default function Game() {
   const { ws, connected } = useGameSocket(
-    `ws://127.0.0.1:8787/websocket`
+    `wss://xyz-worker.stupidthings.workers.dev/websocket`
   );
-  
+
   const [ammo, setAmmo] = useState<number>(30);
   const [reloading, setReloading] = useState<boolean>(false);
   const [health, setHealth] = useState<number>(100);
@@ -22,16 +21,19 @@ export default function Game() {
   const handleHealthUpdate = (newHealth: number) => {
     setHealth(newHealth);
   };
-  const handlePlayersUpdate = (remotePlayersCount: number, localPlayerExists: boolean) => {
+  const handlePlayersUpdate = (
+    remotePlayersCount: number,
+    localPlayerExists: boolean
+  ) => {
     setPlayersCount(remotePlayersCount + (localPlayerExists ? 1 : 0));
   };
 
   return (
     <div className="w-full h-screen relative">
       <Canvas shadows camera={{ fov: 75, near: 0.1, far: 1000 }}>
-        <World 
-          ws={ws} 
-          onAmmoUpdate={handleAmmoUpdate} 
+        <World
+          ws={ws}
+          onAmmoUpdate={handleAmmoUpdate}
           onHealthUpdate={handleHealthUpdate}
           onPlayersUpdate={handlePlayersUpdate}
         />

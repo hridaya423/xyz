@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
-import Bullet from './Bullet';
-import GunViewModel from './GunViewModel';
+import React, { useRef, useState, useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import Bullet from "./Bullet";
+import GunViewModel from "./GunViewModel";
 
 interface FPSCameraProps {
   playerId: string | null;
@@ -11,7 +11,12 @@ interface FPSCameraProps {
   onAmmoChange?: (ammo: number, reloading: boolean) => void;
 }
 
-export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange }: FPSCameraProps) {
+export default function FPSCamera({
+  playerId,
+  ws,
+  onPositionUpdate,
+  onAmmoChange,
+}: FPSCameraProps) {
   const { camera, raycaster, scene } = useThree();
   const controls = useRef({
     rotation: { x: 0, y: 0 },
@@ -82,26 +87,37 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
     setTimeout(() => setMuzzleFlash(false), 50);
 
     if (ws && playerId) {
-      ws.send(JSON.stringify({ type: 'player-shoot', payload: { playerId } }));
+      ws.send(JSON.stringify({ type: "player-shoot", payload: { playerId } }));
     }
 
     const bulletStart = camera.position.clone();
     bulletStart.y -= 0.1;
-    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(
+      camera.quaternion
+    );
     bulletStart.add(forward.multiplyScalar(0.5));
 
-    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(
+      camera.quaternion
+    );
 
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    raycaster.set(bulletStart, direction.normalize());
     const intersects = raycaster.intersectObjects(scene.children, true);
     if (intersects.length > 0) {
       const hit = intersects[0];
       if (hit.object.userData.isTarget && hit.object.userData.onHit) {
         hit.object.userData.onHit();
-      } 
-      else if (hit.object.userData.isPlayer && hit.object.userData.playerId !== playerId) {
+      } else if (
+        hit.object.userData.isPlayer &&
+        hit.object.userData.playerId !== playerId
+      ) {
         if (ws && playerId) {
-          ws.send(JSON.stringify({ type: 'player-hit', payload: { targetId: hit.object.userData.playerId } }));
+          ws.send(
+            JSON.stringify({
+              type: "player-hit",
+              payload: { targetId: hit.object.userData.playerId },
+            })
+          );
         }
       }
     }
@@ -118,10 +134,9 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
   }
 
   useEffect(() => {
-    let isLocked = false;
+    //let isLocked = false;
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (!isLocked) return;
       switch (e.code) {
         case "KeyW":
           keyState.current.forward = true;
@@ -165,7 +180,6 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
       }
     }
     function handleMouseDown(e: MouseEvent) {
-      if (!isLocked) return;
       if (e.button === 0) {
         isShootingRef.current = true;
       } else if (e.button === 2) {
@@ -180,7 +194,7 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
       }
     }
     function updateRotation(e: MouseEvent) {
-      if (!isLocked) return;
+      // Always update rotation when mouse moves, regardless of lock state
       controls.current.rotation.x = Math.max(
         -Math.PI / 2,
         Math.min(
@@ -194,7 +208,7 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
       document.body.requestPointerLock();
     }
     function handleLockChange() {
-      isLocked = document.pointerLockElement === document.body;
+      //isLocked = document.pointerLockElement === document.body;
     }
     function handleContextMenu(e: Event) {
       e.preventDefault();
@@ -344,12 +358,20 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
       <group ref={playerModelRef}>
         <mesh ref={playerBodyRef}>
           <capsuleGeometry args={[0.3, 1, 4, 8]} />
-          <meshStandardMaterial color="#44ff44" metalness={0.2} roughness={0.8} />
+          <meshStandardMaterial
+            color="#44ff44"
+            metalness={0.2}
+            roughness={0.8}
+          />
         </mesh>
         <group ref={playerGunRef}>
           <mesh>
             <boxGeometry args={[0.1, 0.1, 0.4]} />
-            <meshStandardMaterial color="#2a2a2a" metalness={0.7} roughness={0.2} />
+            <meshStandardMaterial
+              color="#2a2a2a"
+              metalness={0.7}
+              roughness={0.2}
+            />
           </mesh>
         </group>
       </group>
