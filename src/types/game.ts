@@ -1,46 +1,29 @@
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Player {
   id: string;
   name: string;
-  position: Vector3;
-  rotation: Vector3;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
   health: number;
   kills: number;
   deaths: number;
 }
 
-export interface Projectile {
-  id: string;
-  position: Vector3;
-  direction: Vector3;
-  playerId: string;
-}
-
 export interface GameState {
   players: Map<string, Player>;
-  projectiles: Projectile[];
+  projectiles: any[];
 }
 
-type GamePayload = {
-  "player-join": Player;
-  "player-leave": { playerId: string };
-  "player-update": Player;
-  "player-shoot": { playerId: string; position: Vector3; direction: Vector3 };
-  "game-state": { players: Player[]; projectiles: Projectile[] };
-  "player-hit": {
-    targetId: string;
-    health: number;
-    kills: number;
-    deaths: number;
-  };
-};
-
-export interface GameMessage {
-  type: keyof GamePayload;
-  payload: GamePayload[keyof GamePayload];
-}
+export type GameMessage =
+  | {
+      type: 'game-state';
+      payload: { players: Player[]; projectiles: any[]; playerId?: string };
+    }
+  | { type: 'player-join'; payload: Player }
+  | { type: 'player-leave'; payload: { playerId: string } }
+  | { type: 'player-update'; payload: Player }
+  | { type: 'player-shoot'; payload: any }
+  | {
+      type: 'player-hit';
+      payload: { targetId: string; health: number; kills?: number; deaths?: number };
+    };
