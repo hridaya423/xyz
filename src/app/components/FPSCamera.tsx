@@ -87,7 +87,7 @@ export default function FPSCamera({
     lastShotRef.current = now;
 
     setAmmo((prev) => prev - 1);
-    controls.current.recoil += 0.02;
+    controls.current.recoil -= 0.02;
     setMuzzleFlash(true);
     setTimeout(() => setMuzzleFlash(false), 50);
 
