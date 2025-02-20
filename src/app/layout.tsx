@@ -14,9 +14,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "You ship, we vote",
+  title: "FPS Game",
   description:
-    "You ship, we vote - a tool for hc for people to vote on ysws ideas.",
+    "FPS game wip for sockathon",
 };
 
 export default function RootLayout({
