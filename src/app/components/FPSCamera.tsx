@@ -29,8 +29,9 @@ export default function FPSCamera({
     position: { x: 0, y: 1.7, z: 0 },
     velocity: { x: 0, y: 0, z: 0 },
     recoil: 0,
-    moveSpeed: 0.1,
+    moveSpeed: 0.2,
     lookSpeed: 0.003,
+    gravity: 0.0065,
     jumpForce: 0.3,
     isGrounded: true,
   });
@@ -304,7 +305,7 @@ export default function FPSCamera({
     const newPosition = { ...controls.current.position };
 
     if (!controls.current.isGrounded) {
-      controls.current.velocity.y -= 0.015;
+      controls.current.velocity.y -= controls.current.gravity;
     }
     newPosition.y += controls.current.velocity.y;
 
