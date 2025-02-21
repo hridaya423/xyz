@@ -29,9 +29,9 @@ export default function FPSCamera({
     position: { x: 0, y: 1.7, z: 0 },
     velocity: { x: 0, y: 0, z: 0 },
     recoil: 0,
-    moveSpeed: 0.2,
+    moveSpeed: 0.25,
     lookSpeed: 0.003,
-    gravity: 0.0065,
+    gravity: 0.0060,
     jumpForce: 0.3,
     isGrounded: true,
   });
@@ -39,6 +39,19 @@ export default function FPSCamera({
   const playerModelRef = useRef<THREE.Group>(null);
   const playerBodyRef = useRef<THREE.Mesh>(null);
   const playerGunRef = useRef<THREE.Group>(null);
+
+  const listener = new THREE.AudioListener();
+  camera.add( listener );
+
+  const sound = new THREE.Audio( listener );
+  const audioLoader = new THREE.AudioLoader();
+
+  audioLoader.load("audio/ambient_music.mp3", function( buffer ) {
+    sound.setBuffer( buffer );
+    sound.setLoop( true );
+    sound.setVolume( 0.5 );
+    sound.play();
+  });
 
   const maxAmmo = 30;
   const maxGrenades = 5;
