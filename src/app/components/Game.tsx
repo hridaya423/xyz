@@ -14,6 +14,8 @@ export default function Game() {
   const [ammo, setAmmo] = useState<number>(30);
   const [reloading, setReloading] = useState<boolean>(false);
   const [health, setHealth] = useState<number>(100);
+  const [grenades, setGrenades] = useState<number>(5);
+  const [isSliding, setIsSliding] = useState(false);
   const [playersCount, setPlayersCount] = useState<number>(0);
   const [isPaused, setIsPaused] = useState(true);
 
@@ -31,10 +33,19 @@ export default function Game() {
   ) => {
     setPlayersCount(remotePlayersCount + (localPlayerExists ? 1 : 0));
   };
+  const handleGrenadeUpdate = (
+    newGrenades: number
+  ) => {
+    setGrenades(newGrenades);
+  };
 
   const handleUnpause = () => {
     setIsPaused(false);
   };
+
+  const handleSliding = () => {
+    setIsSliding(true);
+  }
 
   // Return stuff (Hyper Text Markup Language)
   return (
@@ -46,8 +57,10 @@ export default function Game() {
           ws={ws}
           onAmmoUpdate={handleAmmoUpdate}
           onHealthUpdate={handleHealthUpdate}
+          onGrenadeUpdate={handleGrenadeUpdate}
           onPlayersUpdate={handlePlayersUpdate}
           isPaused={isPaused}
+          onSlide={handleSliding}
           onUnpause={handleUnpause}
         />
       </Canvas>
@@ -75,6 +88,8 @@ export default function Game() {
           <li>Left Click - Shoot</li>
           <li>Right Click - Aim</li>
           <li>R - Reload</li>
+          <li>G - Grenades</li>
+          <li>Shift - Slide</li>
           <li>ESC - Release mouse</li>
         </ul>
       </div>
