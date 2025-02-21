@@ -15,6 +15,7 @@ export default function Game() {
   const [reloading, setReloading] = useState<boolean>(false);
   const [health, setHealth] = useState<number>(100);
   const [grenades, setGrenades] = useState<number>(5);
+  const [isSliding, setIsSliding] = useState(false);
   const [playersCount, setPlayersCount] = useState<number>(0);
   const [isPaused, setIsPaused] = useState(true);
 
@@ -42,6 +43,10 @@ export default function Game() {
     setIsPaused(false);
   };
 
+  const handleSliding = () => {
+    setIsSliding(true);
+  }
+
   // Return stuff (Hyper Text Markup Language)
   return (
     <div className="w-full h-screen relative">
@@ -55,6 +60,7 @@ export default function Game() {
           onGrenadeUpdate={handleGrenadeUpdate}
           onPlayersUpdate={handlePlayersUpdate}
           isPaused={isPaused}
+          onSlide={handleSliding}
           onUnpause={handleUnpause}
         />
       </Canvas>
@@ -82,6 +88,8 @@ export default function Game() {
           <li>Left Click - Shoot</li>
           <li>Right Click - Aim</li>
           <li>R - Reload</li>
+          <li>G - Grenades</li>
+          <li>Shift - Slide</li>
           <li>ESC - Release mouse</li>
         </ul>
       </div>

@@ -12,6 +12,7 @@ interface FPSCameraProps {
   onGrenadeChange?: (grenades: number) => void;
   isPaused: boolean;
   onUnpause: () => void;
+  onSlide: () => void;
 }
 
 export default function FPSCamera({
@@ -20,6 +21,7 @@ export default function FPSCamera({
   onPositionUpdate,
   onAmmoChange,
   onGrenadeChange,
+  onSlide,
   isPaused,
   onUnpause,
 }: FPSCameraProps) {
@@ -30,6 +32,8 @@ export default function FPSCamera({
     velocity: { x: 0, y: 0, z: 0 },
     recoil: 0,
     moveSpeed: 0.25,
+    slideSpeed: 0.4,
+    slideJump: 0.4,
     lookSpeed: 0.003,
     gravity: 0.0060,
     jumpForce: 0.3,
@@ -56,10 +60,12 @@ export default function FPSCamera({
   const maxAmmo = 30;
   const maxGrenades = 5;
   const reloadTime = 2000;
+  const slidingTime = 500;
   const [ammo, setAmmo] = useState<number>(maxAmmo);
   const [grenades, setGrenades] = useState<number>(maxGrenades);
   const [reloading, setReloading] = useState<boolean>(false);
   const [muzzleFlash, setMuzzleFlash] = useState(false);
+  const [sliding, setSliding] = useState(false);
 
   useEffect(() => {
     if (onAmmoChange) {
@@ -72,6 +78,12 @@ export default function FPSCamera({
       onGrenadeChange(grenades);
     }
   }, [grenades, onGrenadeChange])
+
+  useEffect(() => {
+    if (onSlide) {
+      onSlide();
+    }
+  }, [sliding, onSlide])
 
   const lastShotRef = useRef(0);
   const [bullets, setBullets] = useState<
@@ -97,6 +109,19 @@ export default function FPSCamera({
       setAmmo(maxAmmo);
       setReloading(false);
     }, reloadTime);
+  }
+
+  function shootSlide() {
+    if (!sliding) {
+      setSliding(true);
+      const slideTilt = -0.25;
+      controls.current.rotation.x = controls.current.recoil + slideTilt;
+
+      setTimeout(() => {
+        setSliding(false);
+        controls.current.rotation.x = 0;
+      }, slidingTime)
+    }
   }
 
   function shootGrenade() {
@@ -200,6 +225,9 @@ export default function FPSCamera({
             controls.current.velocity.y = controls.current.jumpForce;
             controls.current.isGrounded = false;
           }
+          break;
+        case "KeyQ":
+          shootSlide();
           break;
         // R
         case "KeyR":
@@ -313,7 +341,7 @@ export default function FPSCamera({
 
     controls.current.recoil *= 0.95;
 
-    const speed = controls.current.moveSpeed;
+    let speed = sliding ? controls.current.slideSpeed : controls.current.moveSpeed;
     const angle = controls.current.rotation.y;
     const newPosition = { ...controls.current.position };
 
@@ -420,6 +448,9 @@ export default function FPSCamera({
         )
       );
     }
+
+    console.log(speed)
+    console.log(controls.current.position.y)
   });
 
   return (
