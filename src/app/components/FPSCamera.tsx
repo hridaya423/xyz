@@ -1,25 +1,41 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
-import Bullet from './Bullet';
-import GunViewModel from './GunViewModel';
+import React, { useRef, useState, useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import Bullet from "./Bullet";
+import GunViewModel from "./GunViewModel";
 
 interface FPSCameraProps {
   playerId: string | null;
   ws?: WebSocket | null;
   onPositionUpdate?: (position: THREE.Vector3, rotation: THREE.Euler) => void;
   onAmmoChange?: (ammo: number, reloading: boolean) => void;
+  onGrenadeChange?: (grenades: number) => void;
+  isPaused: boolean;
+  onUnpause: () => void;
+  onSlide: () => void;
 }
 
-export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange }: FPSCameraProps) {
+export default function FPSCamera({
+  playerId,
+  ws,
+  onPositionUpdate,
+  onAmmoChange,
+  onGrenadeChange,
+  onSlide,
+  isPaused,
+  onUnpause,
+}: FPSCameraProps) {
   const { camera, raycaster, scene } = useThree();
   const controls = useRef({
     rotation: { x: 0, y: 0 },
     position: { x: 0, y: 1.7, z: 0 },
     velocity: { x: 0, y: 0, z: 0 },
     recoil: 0,
-    moveSpeed: 0.3,
+    moveSpeed: 0.25,
+    slideSpeed: 0.4,
+    slideJump: 0.4,
     lookSpeed: 0.003,
+    gravity: 0.0060,
     jumpForce: 0.3,
     isGrounded: true,
   });
@@ -28,17 +44,46 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
   const playerBodyRef = useRef<THREE.Mesh>(null);
   const playerGunRef = useRef<THREE.Group>(null);
 
+  const listener = new THREE.AudioListener();
+  camera.add( listener );
+
+  const sound = new THREE.Audio( listener );
+  const audioLoader = new THREE.AudioLoader();
+
+  audioLoader.load("audio/ambient_music.mp3", function( buffer ) {
+    sound.setBuffer( buffer );
+    sound.setLoop( true );
+    sound.setVolume( 0.5 );
+    sound.play();
+  });
+
   const maxAmmo = 30;
+  const maxGrenades = 5;
   const reloadTime = 2000;
+  const slidingTime = 500;
   const [ammo, setAmmo] = useState<number>(maxAmmo);
+  const [grenades, setGrenades] = useState<number>(maxGrenades);
   const [reloading, setReloading] = useState<boolean>(false);
   const [muzzleFlash, setMuzzleFlash] = useState(false);
+  const [sliding, setSliding] = useState(false);
 
   useEffect(() => {
     if (onAmmoChange) {
       onAmmoChange(ammo, reloading);
     }
   }, [ammo, reloading, onAmmoChange]);
+
+  useEffect(() => {
+    if (onGrenadeChange) {
+      onGrenadeChange(grenades);
+    }
+  }, [grenades, onGrenadeChange])
+
+  useEffect(() => {
+    if (onSlide) {
+      onSlide();
+    }
+  }, [sliding, onSlide])
 
   const lastShotRef = useRef(0);
   const [bullets, setBullets] = useState<
@@ -56,6 +101,7 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
     jump: false,
   });
 
+  // Visual Studio Code hates this line.
   function reload() {
     if (reloading) return;
     setReloading(true);
@@ -63,6 +109,27 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
       setAmmo(maxAmmo);
       setReloading(false);
     }, reloadTime);
+  }
+
+  function shootSlide() {
+    if (!sliding) {
+      setSliding(true);
+      const slideTilt = -0.25;
+      controls.current.rotation.x = controls.current.recoil + slideTilt;
+
+      setTimeout(() => {
+        setSliding(false);
+        controls.current.rotation.x = 0;
+      }, slidingTime)
+    }
+  }
+
+  function shootGrenade() {
+    if (grenades > 0) {
+      console.log("shooting grenades");
+
+      setGrenades((prev) => prev - 1);
+    }
   }
 
   function shoot() {
@@ -77,31 +144,42 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
     lastShotRef.current = now;
 
     setAmmo((prev) => prev - 1);
-    controls.current.recoil += 0.02;
+    controls.current.recoil -= 0.02;
     setMuzzleFlash(true);
     setTimeout(() => setMuzzleFlash(false), 50);
 
     if (ws && playerId) {
-      ws.send(JSON.stringify({ type: 'player-shoot', payload: { playerId } }));
+      ws.send(JSON.stringify({ type: "player-shoot", payload: { playerId } }));
     }
 
     const bulletStart = camera.position.clone();
     bulletStart.y -= 0.1;
-    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(
+      camera.quaternion
+    );
     bulletStart.add(forward.multiplyScalar(0.5));
 
-    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(
+      camera.quaternion
+    );
 
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    raycaster.set(bulletStart, direction.normalize());
     const intersects = raycaster.intersectObjects(scene.children, true);
     if (intersects.length > 0) {
       const hit = intersects[0];
       if (hit.object.userData.isTarget && hit.object.userData.onHit) {
         hit.object.userData.onHit();
-      } 
-      else if (hit.object.userData.isPlayer && hit.object.userData.playerId !== playerId) {
+      } else if (
+        hit.object.userData.isPlayer &&
+        hit.object.userData.playerId !== playerId
+      ) {
         if (ws && playerId) {
-          ws.send(JSON.stringify({ type: 'player-hit', payload: { targetId: hit.object.userData.playerId } }));
+          ws.send(
+            JSON.stringify({
+              type: "player-hit",
+              payload: { targetId: hit.object.userData.playerId },
+            })
+          );
         }
       }
     }
@@ -118,69 +196,98 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
   }
 
   useEffect(() => {
-    let isLocked = false;
-
     function handleKeyDown(e: KeyboardEvent) {
-      if (!isLocked) return;
+      if (isPaused && e.code !== "Space") return;
+
+      // Switch the key codes
       switch (e.code) {
+        // W
         case "KeyW":
           keyState.current.forward = true;
           break;
+        // S
         case "KeyS":
           keyState.current.backward = true;
           break;
+        // A
         case "KeyA":
           keyState.current.left = true;
           break;
+        // D
         case "KeyD":
           keyState.current.right = true;
           break;
+        // Space
         case "Space":
-          if (controls.current.isGrounded) {
+          if (isPaused) {
+            onUnpause();
+          } else if (controls.current.isGrounded) {
             controls.current.velocity.y = controls.current.jumpForce;
             controls.current.isGrounded = false;
           }
           break;
+        case "KeyQ":
+          shootSlide();
+          break;
+        // R
         case "KeyR":
           if (!reloading && ammo < maxAmmo) {
             reload();
           }
           break;
+        // G
+        case "KeyG":
+          shootGrenade();
+          break;
       }
     }
+
     function handleKeyUp(e: KeyboardEvent) {
+      if (isPaused) return;
+
       switch (e.code) {
+        // W
         case "KeyW":
           keyState.current.forward = false;
           break;
+        // S
         case "KeyS":
           keyState.current.backward = false;
           break;
+        // A
         case "KeyA":
           keyState.current.left = false;
           break;
+        // D
         case "KeyD":
           keyState.current.right = false;
           break;
       }
     }
+
     function handleMouseDown(e: MouseEvent) {
-      if (!isLocked) return;
+      if (isPaused) return;
+
       if (e.button === 0) {
         isShootingRef.current = true;
       } else if (e.button === 2) {
         setIsAiming(true);
       }
     }
+
     function handleMouseUp(e: MouseEvent) {
+      if (isPaused) return;
+
       if (e.button === 0) {
         isShootingRef.current = false;
       } else if (e.button === 2) {
         setIsAiming(false);
       }
     }
+
     function updateRotation(e: MouseEvent) {
-      if (!isLocked) return;
+      if (isPaused) return;
+
       controls.current.rotation.x = Math.max(
         -Math.PI / 2,
         Math.min(
@@ -190,57 +297,62 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
       );
       controls.current.rotation.y -= e.movementX * controls.current.lookSpeed;
     }
+
     function lockControls() {
       document.body.requestPointerLock();
     }
+
     function handleLockChange() {
-      isLocked = document.pointerLockElement === document.body;
+      //isLocked = document.pointerLockElement === document.body;
     }
+
     function handleContextMenu(e: Event) {
       e.preventDefault();
     }
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", handleKeyUp);
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.addEventListener("mousemove", updateRotation);
-    document.addEventListener("click", lockControls);
-    document.addEventListener("pointerlockchange", handleLockChange);
-    document.addEventListener("contextmenu", handleContextMenu);
+    // Add listeners (Cant wait for firefox to crash on this code)
+    document.addEventListener("keydown", handleKeyDown); // Key down
+    document.addEventListener("keyup", handleKeyUp); // Key up
+    document.addEventListener("mousedown", handleMouseDown); // Mouse down
+    document.addEventListener("mouseup", handleMouseUp); // Mouse up
+    document.addEventListener("mousemove", updateRotation); // Mouse move
+    document.addEventListener("click", lockControls); // Click
+    document.addEventListener("pointerlockchange", handleLockChange); // Pointer lock change
+    document.addEventListener("contextmenu", handleContextMenu); // Content menu
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyUp);
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("mousemove", updateRotation);
-      document.removeEventListener("click", lockControls);
-      document.removeEventListener("pointerlockchange", handleLockChange);
-      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown); // Key down
+      document.removeEventListener("keyup", handleKeyUp); // Key up
+      document.removeEventListener("mousedown", handleMouseDown); // Mouse down
+      document.removeEventListener("mouseup", handleMouseUp); // Mouse up
+      document.removeEventListener("mousemove", updateRotation); // Mouse move
+      document.removeEventListener("click", lockControls); // Click
+      document.removeEventListener("pointerlockchange", handleLockChange); // Pointer lock change
+      document.removeEventListener("contextmenu", handleContextMenu); // Content menu
     };
-  }, [camera, ammo, reloading]);
+  }, [isPaused, onUnpause, ammo, reloading, reload]);
 
   const [isAiming, setIsAiming] = useState(false);
 
   useFrame(() => {
     if (isShootingRef.current) {
-      shoot();
+      shoot(); // Shoot
     }
 
     controls.current.recoil *= 0.95;
 
-    const speed = controls.current.moveSpeed;
+    let speed = sliding ? controls.current.slideSpeed : controls.current.moveSpeed;
     const angle = controls.current.rotation.y;
     const newPosition = { ...controls.current.position };
 
     if (!controls.current.isGrounded) {
-      controls.current.velocity.y -= 0.015;
+      controls.current.velocity.y -= controls.current.gravity;
     }
     newPosition.y += controls.current.velocity.y;
 
     let isOnPlatform = false;
     const playerY = newPosition.y - 1.7;
+    // Le boxes
     const platformBoxes = [
       { min: [-7, 1.5, -12], max: [-3, 2, -8] },
       { min: [3, 2, -17], max: [7, 2.5, -13] },
@@ -336,6 +448,9 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
         )
       );
     }
+
+    console.log(speed)
+    console.log(controls.current.position.y)
   });
 
   return (
@@ -344,12 +459,20 @@ export default function FPSCamera({ playerId, ws, onPositionUpdate, onAmmoChange
       <group ref={playerModelRef}>
         <mesh ref={playerBodyRef}>
           <capsuleGeometry args={[0.3, 1, 4, 8]} />
-          <meshStandardMaterial color="#44ff44" metalness={0.2} roughness={0.8} />
+          <meshStandardMaterial
+            color="#44ff44"
+            metalness={0.2}
+            roughness={0.8}
+          />
         </mesh>
         <group ref={playerGunRef}>
           <mesh>
             <boxGeometry args={[0.1, 0.1, 0.4]} />
-            <meshStandardMaterial color="#2a2a2a" metalness={0.7} roughness={0.2} />
+            <meshStandardMaterial
+              color="#2a2a2a"
+              metalness={0.7}
+              roughness={0.2}
+            />
           </mesh>
         </group>
       </group>
